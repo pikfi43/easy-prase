@@ -1,0 +1,40 @@
+{
+  "name": "easyprice-api",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "import:kokshetau-poi": "tsx src/importers/run.ts osm-kokshetau",
+    "import:technodom": "tsx src/importers/run.ts technodom",
+    "import:alser": "tsx src/importers/run.ts alser",
+    "import:toimart": "tsx src/importers/run.ts toimart",
+    "import:arbuz": "tsx src/importers/run.ts arbuz",
+    "import:lavka": "tsx src/importers/run.ts yandex-lavka",
+    "import:small": "tsx src/importers/run.ts small",
+    "resolve:osm-addresses": "tsx src/importers/resolve-addresses.ts",
+    "import:all": "tsx src/importers/import-all.ts",
+    "test": "cross-env NODE_ENV=test MONGOMS_VERSION=6.0.14 node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@types/multer": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "jose": "^6.2.12",
+    "mongoose": "^9.10.2",
+    "multer": "^2.4.0",
+    "pdf-parse": "^2.4.5"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.3",
+    "@types/node": "^22.13.4",
+    "cross-env": "^10.1.0",
+    "mongodb-memory-server": "^11.3.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}

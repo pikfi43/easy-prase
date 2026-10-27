@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: easyprice
+    runtime: node
+    region: frankfurt
+    plan: free
+    buildCommand: cd backend && npm ci && npx tsc && cd ../frontend && npm ci && npm run build
+    startCommand: cd backend && npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_MEMORY
+        value: "1"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: PORT
+        value: "3000"

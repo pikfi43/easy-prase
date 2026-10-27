@@ -1,0 +1,18 @@
+# Зависимости и сборка
+node_modules/
+dist/
+android/
+*.tsbuildinfo
+
+# Секреты и локальные данные
+backend/.env
+backend/data/
+backend/uploads/
+
+# Сборки APK и скриншоты
+*.apk
+*.png
+
+# Служебное
+.DS_Store
+Thumbs.db

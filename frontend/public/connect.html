@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>EasyPrice — подключение телефона</title>
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --bg: #f6f3ee;
+    --surface: #ffffff;
+    --surface-2: #faf8f4;
+    --surface-3: #f0ebe2;
+    --border: #e5ded2;
+    --text: #2b2620;
+    --text-2: #5a5046;
+    --muted: #8a8176;
+    --accent: #a8700f;
+    --grad: linear-gradient(135deg, #d9a21c, #b8780a 55%, #8f5a08);
+  }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(180deg, var(--surface-3), var(--bg)); color: var(--text); padding: 16px;
+  }
+  .card {
+    background: var(--surface); border-radius: 24px; padding: 28px 24px; max-width: 420px; width: 100%;
+    border: 1px solid var(--border); box-shadow: 0 12px 40px #2b262018; text-align: center;
+  }
+  h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: -.5px; color: var(--text); }
+  p { margin: 6px 0; line-height: 1.45; color: var(--text-2); font-size: 14px; }
+  code { background: var(--surface-3); border-radius: 6px; padding: 2px 6px; font-size: 13px; color: var(--accent); }
+  #qrcode { display: inline-block; margin: 14px auto 6px; padding: 12px; background: #fff; border: 1px solid var(--border); border-radius: 16px; }
+  #qrcode img, #qrcode canvas { display: block; width: 240px !important; height: 240px !important; }
+  .address { font-weight: 600; font-size: 14px; word-break: break-all; color: var(--text); }
+  .open-btn {
+    display: inline-block; margin-top: 14px; padding: 14px 28px; border-radius: 13px; border: 0;
+    background: var(--grad); color: #fff; font-size: 16px; font-weight: 700; text-decoration: none;
+    box-shadow: 0 8px 18px #a8700f33;
+  }
+  .open-btn:active { transform: scale(.97); }
+  .ok { color: var(--accent); font-weight: 600; }
+  .warn { color: #f2545b; font-size: 13px; }
+  .steps { text-align: left; margin: 10px auto 0; max-width: 360px; padding-left: 18px; }
+  .steps li { margin: 5px 0; font-size: 14px; color: var(--text-2); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="laptop-view" style="display:none">
+    <h1>Подключить телефон</h1>
+    <p>Наведите камеру телефона на QR-код — телефон откроет приложение и подключится к ноутбуку сам, ничего вводить не нужно.</p>
+    <div id="qrcode"></div>
+    <p class="address" id="laptop-address"></p>
+    <p class="warn" id="laptop-note"></p>
+  </div>
+  <div id="phone-view" style="display:none">
+    <h1>EasyPrice</h1>
+    <p id="phone-status">Подключаюсь к ноутбуку…</p>
+    <p class="address" id="phone-address"></p>
+    <a class="open-btn" id="open-app" href="/" style="display:none">Открыть EasyPrice</a>
+  </div>
+</div>
+<script src="/qrcode.min.js"></script>
+<script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var host = params.get('host');
+  var apply = params.get('apply') === '1';
+  var isPhone = apply;
+
+  if (!isPhone) {
+    // Экран ноутбука: показываем QR со ссылкой на эту же страницу с ?apply=1
+    document.getElementById('laptop-view').style.display = 'block';
+    if (!host) {
+      document.getElementById('laptop-note').textContent =
+        'Адрес не передан. Откройте эту страницу через start.bat или добавьте ?host=IP-ноутбука.';
+      return;
+    }
+    // ВАЖНО: не location.host (на ноутбуке это localhost) — используем LAN-адрес из ?host=
+    var phoneUrl = 'http://' + host + ':5173/connect.html?host=' + encodeURIComponent(host) + '&apply=1';
+    new QRCode(document.getElementById('qrcode'), { text: phoneUrl, width: 240, height: 240, correctLevel: QRCode.CorrectLevel.M });
+    document.getElementById('laptop-address').textContent = 'Адрес для ручного ввода: http://' + host + ':3000';
+    return;
+  }
+
+  // Телефон: сохраняем адрес API и проверяем связь
+  document.getElementById('phone-view').style.display = 'block';
+  var apiUrl = 'http://' + host + ':3000/api';
+  document.getElementById('phone-address').textContent = apiUrl;
+  try {
+    localStorage.setItem('easyprice-server-url', apiUrl);
+  } catch (e) { /* если хранилище недоступно — просто проверяем связь */ }
+
+  fetch(apiUrl + '/health', { cache: 'no-store' })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      if (data && data.status === 'ok') {
+        document.getElementById('phone-status').innerHTML = '<span class="ok">Ноутбук найден, подключение сохранено!</span><br>Нажмите кнопку ниже.';
+        document.getElementById('open-app').style.display = 'inline-block';
+      } else {
+        throw new Error('bad status');
+      }
+    })
+    .catch(function () {
+      document.getElementById('phone-status').innerHTML =
+        '<span class="warn">Ноутбук пока не отвечает.</span><br>Проверьте, что оба устройства в одной сети, и что start.bat запущен. Затем обновите страницу.';
+    });
+})();
+</script>
+</body>
+</html>
